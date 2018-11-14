@@ -33,7 +33,7 @@ class MyAI ( Agent ):
         self.danger = dict()
         self.xlim = 100000
         self.ylim = 100000
-        self.go_back = False
+        self.got_gold = False
         # ======================================================================
         # YOUR CODE ENDS
         # ======================================================================
@@ -42,51 +42,116 @@ class MyAI ( Agent ):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-        print("Current: ", self.current)
-        print("Just Visited: ", self.last_visited)
-        print(self.visited)
+        print("Safe coords:", self.safe)
+        print("Danger coords:", self.danger)
+        print("Current:", self.current)
+        print("Last visited:",self.last_visited)
+
         self.visited[self.current] = True
-        if self.current == (1,1) and self.go_back:
+        if self.current in self.safe:
+            del self.safe[self.current]
+        if self.current in self.danger:
+            del self.danger[self.current]
+
+        if self.current == (1,1) and self.got_gold:
             return Agent.Action.CLIMB
-        elif self.go_back:
+        elif self.got_gold:
             return_coord = self.return_to_start()
-            print("Going to: ", return_coord)
             return self.moveTo(return_coord)
+
         if glitter:
-            self.go_back = True
+            self.got_gold = True
             return Agent.Action.GRAB
-        if self.current == (1, 1) and (not stench and not breeze):
-            coord = (self.current[0] + 1, self.current[1])
-            return self.moveTo(coord)
-        elif self.current == (1,1) and (stench or breeze):
+
+        if self.current == (1,1) and (stench or breeze):
             return Agent.Action.CLIMB
+
         if bump:
             if self.orientation == "right":
                 self.xlim = self.current[0]
+                self.current = self.last_visited
+                self.orientation = "up"
+                for c in self.safe:
+                    if c[0] > self.xlim:
+                        del self.safe[c]
+                return Agent.Action.TURN_LEFT
             elif self.orientation == "up":
                 self.ylim = self.current[1]
-            self.current = self.last_visited
-            self.go_back = True
+                self.current = self.last_visited
+                self.orientation = "left"
+                for c in self.safe:
+                    if c[1] > self.ylim:
+                        del self.safe[c]
+                return Agent.Action.TURN_LEFT
+
+        if stench and breeze:
+            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
+            for c in danger_coord:
+                if self.is_valid(c) and c not in self.visited:
+                    self.danger[c] = (True, True)
+            for i in self.safe:
+                if self.is_valid(i):
+                    return self.moveTo(i)
+            for k in self.visited:
+                if self.is_valid(k) and k != self.last_visited:
+                    return self.moveTo(k)
             return self.moveTo(self.last_visited)
+
         if breeze:
-            # Index 0 of danger dictionary = pit, Index 1 is wumpus
-            # danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
-            # for c in danger_coord:
-            #     if self.is_valid(c):
-            #         self.danger[c] = (True, False)
-            self.go_back = True
+            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
+            for c in danger_coord:
+                if self.is_valid(c) and c not in self.visited:
+                    if c in self.danger and self.danger[c][0] == False:
+                        del self.danger[c]
+                        self.safe[c] = True
+                    else:
+                        self.danger[c] = (True, False)
+            for i in self.safe:
+                if self.is_valid(i):
+                    return self.moveTo(i)
+            for k in self.visited:
+                if self.is_valid(k) and k != self.last_visited:
+                    return self.moveTo(k)
             return self.moveTo(self.last_visited)
+
         if stench:
-            # Index 0 of danger dictionary = pit, Index 1 is wumpus
-            # danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
-            # for c in danger_coord:
-            #     if self.is_valid(c):
-            #         self.danger[c] = (False, True)
-            self.go_back = True
+            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
+            for c in danger_coord:
+                if self.is_valid(c) and c not in self.visited:
+                    if c in self.danger and self.danger[c][1] == False:
+                        del self.danger[c]
+                        self.safe[c] = True
+                    else:
+                        self.danger[c] = (False, True)
+            for i in self.safe:
+                if self.is_valid(i):
+                    return self.moveTo(i)
+            for k in self.visited:
+                if self.is_valid(k) and k != self.last_visited:
+                    return self.moveTo(k)
             return self.moveTo(self.last_visited)
+
         else:
-            coord = (self.current[0] + 1, self.current[1])
-            return self.moveTo(coord)
+            safe_coord = [(self.current[0] + 1, self.current[1]), (self.current[0] - 1, self.current[1]),
+                            (self.current[0], self.current[1] + 1), (self.current[0], self.current[1] - 1)]
+            for c in safe_coord:
+                if self.is_valid(c) and c not in self.visited:
+                    self.safe[c] = True
+                    if c in self.danger:
+                        del self.danger[c]
+            if len(self.safe) > 0:
+                for i in self.safe:
+                    if self.is_valid(i) and i not in self.visited:
+                        return self.moveTo(i)
+                for k in self.visited:
+                    if self.is_valid(k) and k != self.last_visited:
+                        return self.moveTo(k)
+                return self.moveTo(self.last_visited)
+            else:
+                self.got_gold = True
 
         # ======================================================================
         # YOUR CODE ENDS
@@ -165,16 +230,26 @@ class MyAI ( Agent ):
             self.orientation = "left"
             return Agent.Action.TURN_LEFT
 
-    def is_valid(self, coord):
+    def is_in_bounds(self, coord):
         if coord[0] > self.xlim or coord[1] > self.ylim:
             return False
-        elif coord[0] < 0 or coord[1] < 0:
+        elif coord[0] <= 0 or coord[1] <= 0:
             return False
         return True
 
+    def is_valid(self, coord):
+        if self.is_in_bounds(coord):
+            if (coord[0] == self.current[0] + 1 or coord[0] == self.current[0] - 1) and coord[1] == self.current[1]:
+                return True
+            elif (coord[1] == self.current[1] + 1 or coord[1] == self.current[1] - 1) and coord[0] == self.current[0]:
+                return True
+            else:
+                return False
+        else:
+            return False
+
     def return_to_start(self):
-        for coord in self.visited.keys():
-            print(coord)
+        for coord in self.visited:
             if self.current[0] - 1 == coord[0] and self.current[1] == coord[1]:
                 del self.visited[self.current]
                 return coord
