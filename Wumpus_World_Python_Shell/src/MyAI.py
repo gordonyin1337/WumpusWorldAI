@@ -85,8 +85,10 @@ class MyAI ( Agent ):
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
                     self.danger[c] = (True, True)
-            shuffledsafe = random.shuffle(list(self.safe.keys()))
-            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            shuffledsafe = list(self.safe.keys())
+            shuffledvisited = list(self.visited.keys())
+            random.shuffle(shuffledsafe)
+            random.shuffle(shuffledvisited)
             for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
@@ -105,8 +107,10 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (True, False)
-            shuffledsafe = random.shuffle(list(self.safe.keys()))
-            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            shuffledsafe = list(self.safe.keys())
+            shuffledvisited = list(self.visited.keys())
+            random.shuffle(shuffledsafe)
+            random.shuffle(shuffledvisited)
             for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
@@ -125,8 +129,10 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (False, True)
-            shuffledsafe = random.shuffle(list(self.safe.keys()))
-            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            shuffledsafe = list(self.safe.keys())
+            shuffledvisited = list(self.visited.keys())
+            random.shuffle(shuffledsafe)
+            random.shuffle(shuffledvisited)
             for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
@@ -144,8 +150,10 @@ class MyAI ( Agent ):
                     if c in self.danger:
                         del self.danger[c]
             if len(self.safe) > 0:
-                shuffledsafe = random.shuffle(list(self.safe.keys()))
-                shuffledvisited = random.shuffle(list(self.visited.keys()))
+                shuffledsafe = list(self.safe.keys())
+                shuffledvisited = list(self.visited.keys())
+                random.shuffle(shuffledsafe)
+                random.shuffle(shuffledvisited)
                 for i in shuffledsafe:
                     if self.is_valid(i):
                         return self.moveTo(i)
@@ -155,7 +163,7 @@ class MyAI ( Agent ):
                 return self.moveTo(self.last_visited)
             else:
                 self.got_gold = True
-                return Agent.ACTION.TURN_LEFT
+                return Agent.Action.TURN_LEFT
 
         # ======================================================================
         # YOUR CODE ENDS
