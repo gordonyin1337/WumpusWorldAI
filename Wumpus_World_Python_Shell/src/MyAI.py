@@ -18,6 +18,7 @@
 # ======================================================================
 
 from Agent import Agent
+import random
 
 class MyAI ( Agent ):
 
@@ -71,17 +72,11 @@ class MyAI ( Agent ):
                 self.xlim = self.current[0]
                 self.current = self.last_visited
                 self.orientation = "up"
-                for c in self.safe:
-                    if c[0] > self.xlim:
-                        del self.safe[c]
                 return Agent.Action.TURN_LEFT
             elif self.orientation == "up":
                 self.ylim = self.current[1]
                 self.current = self.last_visited
                 self.orientation = "left"
-                for c in self.safe:
-                    if c[1] > self.ylim:
-                        del self.safe[c]
                 return Agent.Action.TURN_LEFT
 
         if stench and breeze:
@@ -90,10 +85,12 @@ class MyAI ( Agent ):
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
                     self.danger[c] = (True, True)
-            for i in self.safe:
+            shuffledsafe = random.shuffle(list(self.safe.keys()))
+            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
-            for k in self.visited:
+            for k in shuffledvisited:
                 if self.is_valid(k) and k != self.last_visited:
                     return self.moveTo(k)
             return self.moveTo(self.last_visited)
@@ -108,10 +105,12 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (True, False)
-            for i in self.safe:
+            shuffledsafe = random.shuffle(list(self.safe.keys()))
+            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
-            for k in self.visited:
+            for k in shuffledvisited:
                 if self.is_valid(k) and k != self.last_visited:
                     return self.moveTo(k)
             return self.moveTo(self.last_visited)
@@ -126,10 +125,12 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (False, True)
-            for i in self.safe:
+            shuffledsafe = random.shuffle(list(self.safe.keys()))
+            shuffledvisited = random.shuffle(list(self.visited.keys()))
+            for i in shuffledsafe:
                 if self.is_valid(i):
                     return self.moveTo(i)
-            for k in self.visited:
+            for k in shuffledvisited:
                 if self.is_valid(k) and k != self.last_visited:
                     return self.moveTo(k)
             return self.moveTo(self.last_visited)
@@ -143,15 +144,18 @@ class MyAI ( Agent ):
                     if c in self.danger:
                         del self.danger[c]
             if len(self.safe) > 0:
-                for i in self.safe:
-                    if self.is_valid(i) and i not in self.visited:
+                shuffledsafe = random.shuffle(list(self.safe.keys()))
+                shuffledvisited = random.shuffle(list(self.visited.keys()))
+                for i in shuffledsafe:
+                    if self.is_valid(i):
                         return self.moveTo(i)
-                for k in self.visited:
+                for k in shuffledvisited:
                     if self.is_valid(k) and k != self.last_visited:
                         return self.moveTo(k)
                 return self.moveTo(self.last_visited)
             else:
                 self.got_gold = True
+                return Agent.ACTION.TURN_LEFT
 
         # ======================================================================
         # YOUR CODE ENDS
@@ -231,7 +235,7 @@ class MyAI ( Agent ):
             return Agent.Action.TURN_LEFT
 
     def is_in_bounds(self, coord):
-        if coord[0] > self.xlim or coord[1] > self.ylim:
+        if coord[0] >= self.xlim or coord[1] >= self.ylim:
             return False
         elif coord[0] <= 0 or coord[1] <= 0:
             return False
