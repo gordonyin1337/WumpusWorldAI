@@ -71,17 +71,23 @@ class MyAI ( Agent ):
                 self.xlim = self.current[0]
                 self.current = self.last_visited
                 self.orientation = "up"
+                bad_keys = []
                 for c in self.safe:
                     if c[0] > self.xlim:
-                        del self.safe[c]
+                        bad_keys.append(c)
+                for k in bad_keys:
+                    del self.safe[c]
                 return Agent.Action.TURN_LEFT
             elif self.orientation == "up":
                 self.ylim = self.current[1]
                 self.current = self.last_visited
                 self.orientation = "left"
+                bad_keys = []
                 for c in self.safe:
                     if c[1] > self.ylim:
-                        del self.safe[c]
+                        bad_keys.append(c)
+                for k in bad_keys:
+                    del self.safe[c]
                 return Agent.Action.TURN_LEFT
 
         if stench and breeze:
