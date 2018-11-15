@@ -72,11 +72,23 @@ class MyAI ( Agent ):
                 self.xlim = self.current[0]
                 self.current = self.last_visited
                 self.orientation = "up"
+                bad_keys = []
+                for c in self.safe:
+                    if c[0] > self.xlim:
+                        bad_keys.append(c)
+                for k in bad_keys:
+                    del self.safe[c]
                 return Agent.Action.TURN_LEFT
             elif self.orientation == "up":
                 self.ylim = self.current[1]
                 self.current = self.last_visited
                 self.orientation = "left"
+                bad_keys = []
+                for c in self.safe:
+                    if c[1] > self.ylim:
+                        bad_keys.append(c)
+                for k in bad_keys:
+                    del self.safe[c]
                 return Agent.Action.TURN_LEFT
 
         if stench and breeze:
@@ -163,7 +175,7 @@ class MyAI ( Agent ):
                 return self.moveTo(self.last_visited)
             else:
                 self.got_gold = True
-                return Agent.Action.TURN_LEFT
+                return self.return_to_start()
 
         # ======================================================================
         # YOUR CODE ENDS
