@@ -78,7 +78,6 @@ class MyAI ( Agent ):
         if self.current == (1,1) and (stench or breeze):
             return Agent.Action.CLIMB
 
-
         if bump:
             if self.orientation == "right":
                 self.xlim = self.current[0]
@@ -110,16 +109,15 @@ class MyAI ( Agent ):
                 return Agent.Action.TURN_LEFT
 
         if stench and breeze:
-            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
                     self.danger[c] = (True, True)
             return self.get_next_move()
 
-
         if breeze:
-            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
@@ -131,7 +129,7 @@ class MyAI ( Agent ):
             return self.get_next_move()
 
         if stench:
-            #Index 0 of danger dictionary = pit, Index 1 is wumpus
+            # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
@@ -261,7 +259,6 @@ class MyAI ( Agent ):
                 return coord
         return self.last_visited
 
-
     def check_orientation(self, coord):
         if self.current[0] + 1 == coord[0] and self.orientation == 'right':
             return True
@@ -274,16 +271,15 @@ class MyAI ( Agent ):
         else:
             return False
 
-
     def get_next_move(self):
-        # if self.moving[0]:
-        #     coord = self.moving[1]
-        #     if self.check_orientation(coord):
-        #         self.moving = (False, None)
-        #         return self.moveTo(coord)
-        #     elif self.current == self.moving[1]:
-        #         self.moving = (False, None)
-        #     return self.moveTo(coord)
+        if self.moving[0]:
+            coord = self.moving[1]
+            if self.check_orientation(coord):
+                self.moving = (False, None)
+                return self.moveTo(coord)
+            elif self.current == self.moving[1]:
+                self.moving = (False, None)
+            return self.moveTo(coord)
         while not self.queue.empty():
             coord = self.queue.get()
             if self.is_valid(coord) and coord != self.current:
