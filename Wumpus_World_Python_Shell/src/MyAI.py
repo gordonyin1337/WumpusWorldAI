@@ -46,14 +46,14 @@ class MyAI ( Agent ):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-        print("Safe coords:", self.safe)
-        print("Danger coords:", self.danger)
-        print("Visited coords:", self.visited)
-        print("Current:", self.current)
-        print("Last visited:",self.last_visited)
-        print("Xlim:", self.xlim)
-        print("Ylim:", self.ylim)
-        print("Moving To:", self.moving[1])
+        # print("Safe coords:", self.safe)
+        # print("Danger coords:", self.danger)
+        # print("Visited coords:", self.visited)
+        # print("Current:", self.current)
+        # print("Last visited:",self.last_visited)
+        # print("Xlim:", self.xlim)
+        # print("Ylim:", self.ylim)
+        # print("Moving To:", self.moving[1])
 
         self.visited[self.current] = True
         if self.current in self.safe:
@@ -89,8 +89,10 @@ class MyAI ( Agent ):
                     if c[0] >= self.xlim:
                         bad_keys.append(c)
                 for k in bad_keys:
-                    del self.safe[k]
-                    del self.visited[k]
+                    if k in self.safe:
+                        del self.safe[k]
+                    if k in self.visited:
+                        del self.visited[k]
                 return Agent.Action.TURN_LEFT
             elif self.orientation == "up":
                 self.ylim = self.current[1]
@@ -101,8 +103,10 @@ class MyAI ( Agent ):
                     if c[1] >= self.ylim:
                         bad_keys.append(c)
                 for k in bad_keys:
-                    del self.safe[k]
-                    del self.visited[k]
+                    if k in self.safe:
+                        del self.safe[k]
+                    if k in self.visited:
+                        del self.visited[k]
                 return Agent.Action.TURN_LEFT
 
         if stench and breeze:
@@ -255,6 +259,7 @@ class MyAI ( Agent ):
             elif self.current[0] == coord[0] and self.current[1] - 1 == coord[1]:
                 del self.visited[self.current]
                 return coord
+        return self.last_visited
 
 
     def check_orientation(self, coord):
@@ -271,14 +276,14 @@ class MyAI ( Agent ):
 
 
     def get_next_move(self):
-        if self.moving[0]:
-            coord = self.moving[1]
-            if self.check_orientation(coord):
-                self.moving = (False, None)
-                return self.moveTo(coord)
-            elif self.current == self.moving[1]:
-                self.moving = (False, None)
-            return self.moveTo(coord)
+        # if self.moving[0]:
+        #     coord = self.moving[1]
+        #     if self.check_orientation(coord):
+        #         self.moving = (False, None)
+        #         return self.moveTo(coord)
+        #     elif self.current == self.moving[1]:
+        #         self.moving = (False, None)
+        #     return self.moveTo(coord)
         while not self.queue.empty():
             coord = self.queue.get()
             if self.is_valid(coord) and coord != self.current:
