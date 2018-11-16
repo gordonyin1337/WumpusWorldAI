@@ -34,6 +34,7 @@ class MyAI ( Agent ):
         self.safe = dict()
         self.danger = dict()
         self.queue = queue.Queue()
+        self.moving = (False, None)
         self.xlim = 100000
         self.ylim = 100000
         self.got_gold = False
@@ -52,6 +53,7 @@ class MyAI ( Agent ):
         print("Last visited:",self.last_visited)
         print("Xlim:", self.xlim)
         print("Ylim:", self.ylim)
+        print("Moving To:", self.moving[1])
 
         self.visited[self.current] = True
         if self.current in self.safe:
@@ -59,13 +61,9 @@ class MyAI ( Agent ):
         if self.current in self.danger:
             del self.danger[self.current]
 
-
         self.queue = queue.Queue()
         for i in self.safe.keys():
             self.queue.put(i)
-        for i in self.visited.keys():
-            self.queue.put(i)
-
 
         if self.current == (1,1) and self.got_gold:
             return Agent.Action.CLIMB
@@ -88,7 +86,7 @@ class MyAI ( Agent ):
                 self.orientation = "up"
                 bad_keys = []
                 for c in self.safe:
-                    if c[0] > self.xlim:
+                    if c[0] >= self.xlim:
                         bad_keys.append(c)
                 for k in bad_keys:
                     del self.safe[k]
@@ -100,7 +98,7 @@ class MyAI ( Agent ):
                 self.orientation = "left"
                 bad_keys = []
                 for c in self.safe:
-                    if c[1] > self.ylim:
+                    if c[1] >= self.ylim:
                         bad_keys.append(c)
                 for k in bad_keys:
                     del self.safe[k]
@@ -113,11 +111,7 @@ class MyAI ( Agent ):
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
                     self.danger[c] = (True, True)
-            while not self.queue.empty():
-                coord = self.queue.get()
-                if self.is_valid(coord) and coord != self.current:
-                    return self.moveTo(coord)
-            return self.moveTo(self.last_visited)
+            return self.get_next_move()
 
 
         if breeze:
@@ -130,11 +124,7 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (True, False)
-            while not self.queue.empty():
-                coord = self.queue.get()
-                if self.is_valid(coord) and coord != self.current:
-                    return self.moveTo(coord)
-            return self.moveTo(self.last_visited)
+            return self.get_next_move()
 
         if stench:
             #Index 0 of danger dictionary = pit, Index 1 is wumpus
@@ -146,11 +136,7 @@ class MyAI ( Agent ):
                         self.safe[c] = True
                     else:
                         self.danger[c] = (False, True)
-            while not self.queue.empty():
-                coord = self.queue.get()
-                if self.is_valid(coord) and coord != self.current:
-                    return self.moveTo(coord)
-            return self.moveTo(self.last_visited)
+            return self.get_next_move()
 
         else:
             safe_coord = [(self.current[0] + 1, self.current[1]), (self.current[0] - 1, self.current[1]),
@@ -162,14 +148,10 @@ class MyAI ( Agent ):
                     if c in self.danger:
                         del self.danger[c]
             if len(self.safe) > 0:
-                while not self.queue.empty():
-                    coord = self.queue.get()
-                    if self.is_valid(coord) and coord != self.last_visited:
-                        return self.moveTo(coord)
-                return self.moveTo(self.return_to_start())
+                return self.get_next_move()
             else:
                 self.got_gold = True
-                return Agent.Action.CLIMB
+                return self.get_next_move()
         # ======================================================================
         # YOUR CODE ENDS
         # ======================================================================
@@ -273,6 +255,58 @@ class MyAI ( Agent ):
             elif self.current[0] == coord[0] and self.current[1] - 1 == coord[1]:
                 del self.visited[self.current]
                 return coord
+
+
+    def check_orientation(self, coord):
+        if self.current[0] + 1 == coord[0] and self.orientation == 'right':
+            return True
+        elif self.current[1] + 1 == coord[1] and self.orientation == 'up':
+            return True
+        elif self.current[0] - 1 == coord[0] and self.orientation == 'left':
+            return True
+        elif self.current[1] - 1 == coord[1] and self.orientation == 'down':
+            return True
+        else:
+            return False
+
+
+    def get_next_move(self):
+        if self.moving[0]:
+            coord = self.moving[1]
+            if self.check_orientation(coord):
+                self.moving = (False, None)
+                return self.moveTo(coord)
+            elif self.current == self.moving[1]:
+                self.moving = (False, None)
+            return self.moveTo(coord)
+        while not self.queue.empty():
+            coord = self.queue.get()
+            if self.is_valid(coord) and coord != self.current:
+                return self.moveTo(coord)
+        if len(self.safe) > 0:
+            shuffled_list = list(self.visited.keys())
+            random.shuffle(shuffled_list)
+            for c in shuffled_list:
+                safe_coord = list(self.safe.keys())[0]
+                if c[0] == safe_coord[0] and self.is_valid(c) and c != self.last_visited:
+                    self.moving = (True, c)
+                    return self.moveTo(c)
+                elif c[1] == safe_coord[1] and self.is_valid(c) and c != self.last_visited:
+                    self.moving = (True, c)
+                    return self.moveTo(c)
+                elif abs(safe_coord[0] - c[0]) < abs(safe_coord[0] - self.current[0]) and self.is_valid(c) and c != self.last_visited:
+                    self.moving = (True, c)
+                    return self.moveTo(c)
+                elif abs(safe_coord[1] - c[1]) < abs(safe_coord[1] - self.current[1]) and self.is_valid(c) and c != self.last_visited:
+                    self.moving = (True, c)
+                    return self.moveTo(c)
+            for c in shuffled_list:
+                if self.is_valid(c):
+                    self.moving = (True, c)
+                    return self.moveTo(c)
+        else:
+            self.got_gold = True
+            return self.moveTo(self.return_to_start())
 
 
 
