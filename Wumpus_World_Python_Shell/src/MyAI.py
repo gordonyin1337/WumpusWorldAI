@@ -21,9 +21,10 @@ from Agent import Agent
 import queue
 import random
 
+
 class MyAI ( Agent ):
 
-    def __init__ ( self ):
+    def __init__(self):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
@@ -41,7 +42,7 @@ class MyAI ( Agent ):
         # YOUR CODE ENDS
         # ======================================================================
 
-    def getAction( self, stench, breeze, glitter, bump, scream ):
+    def getAction(self, stench, breeze, glitter, bump, scream):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
