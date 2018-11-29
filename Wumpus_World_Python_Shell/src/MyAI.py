@@ -49,15 +49,6 @@ class MyAI ( Agent ):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-        # print("Safe coords:", self.safe)
-        # print("Danger coords:", self.danger)
-        # print("Visited coords:", self.visited)
-        # print("Current:", self.current)
-        # print("Last visited:",self.last_visited)
-        # print("Xlim:", self.xlim)
-        # print("Ylim:", self.ylim)
-        # print("Moving To:", self.moving[1])
-
         self.visited[self.current] = True
         if self.current in self.safe:
             del self.safe[self.current]
