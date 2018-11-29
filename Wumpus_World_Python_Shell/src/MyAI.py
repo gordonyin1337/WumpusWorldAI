@@ -361,25 +361,19 @@ class MyAI ( Agent ):
         if len(self.safe) > 0:
             shuffled_list = possible_coords
             random.shuffle(shuffled_list)
+            safe_coord = list(self.safe.keys())[0]
+            optimal_coord = None
+            for i in shuffled_list:
+                if self.is_valid(i) and i in self.visited:
+                    optimal_coord = i
             for c in shuffled_list:
-                safe_coord = list(self.safe.keys())[0]
                 if c in self.visited and c != self.last_visited and self.is_valid(c):
-                    if c[0] == safe_coord[0]:
-                        self.moving = (True, c)
-                        return self.move_to(c)
-                    elif c[1] == safe_coord[1]:
-                        self.moving = (True, c)
-                        return self.move_to(c)
-                    elif abs(safe_coord[0] - c[0]) < abs(safe_coord[0] - self.current[0]):
-                        self.moving = (True, c)
-                        return self.move_to(c)
-                    elif abs(safe_coord[1] - c[1]) < abs(safe_coord[1] - self.current[1]):
-                        self.moving = (True, c)
-                        return self.move_to(c)
-            for c in shuffled_list:
-                if self.is_valid(c) and c in self.visited:
-                    self.moving = (True, c)
-                    return self.move_to(c)
+                    if abs(safe_coord[0] - c[0]) < abs(safe_coord[0] - optimal_coord[0]):
+                        optimal_coord = c
+                    elif abs(safe_coord[1] - c[1]) < abs(safe_coord[1] - optimal_coord[1]):
+                        optimal_coord = c
+            self.moving = (True, optimal_coord)
+            return self.move_to(optimal_coord)
         else:
             self.got_gold = True
             return self.move_to(self.return_to_start())
