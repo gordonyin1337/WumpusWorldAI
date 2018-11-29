@@ -30,10 +30,13 @@ class MyAI ( Agent ):
         # ======================================================================
         self.current = (1, 1)
         self.last_visited = None
+        self.has_arrow = True
+        self.wumpus_killed = False
         self.orientation = "right"
         self.visited = dict()
         self.safe = dict()
-        self.danger = dict()
+        self.pits = dict()
+        self.wumpus = dict()
         self.moving = (False, None)
         self.xlim = 100000
         self.ylim = 100000
@@ -58,8 +61,10 @@ class MyAI ( Agent ):
         self.visited[self.current] = True
         if self.current in self.safe:
             del self.safe[self.current]
-        if self.current in self.danger:
-            del self.danger[self.current]
+        if self.current in self.pits:
+            del self.pits[self.current]
+        if self.current in self.wumpus:
+            del self.wumpus[self.current]
 
         if self.current == (1, 1) and self.got_gold:
             return Agent.Action.CLIMB
@@ -71,8 +76,16 @@ class MyAI ( Agent ):
             self.got_gold = True
             return Agent.Action.GRAB
 
-        if self.current == (1, 1) and (stench or breeze):
+        if scream:
+            self.wumpus_killed = True
+
+        if self.current == (1, 1) and breeze:
             return Agent.Action.CLIMB
+        elif self.current == (1, 1) and stench and not self.wumpus_killed and not self.has_arrow:
+            return Agent.Action.CLIMB
+        elif self.current == (1, 1) and stench and not self.wumpus_killed:
+            self.has_arrow = False
+            return Agent.Action.SHOOT
 
         if bump:
             if self.orientation == "right":
@@ -87,6 +100,10 @@ class MyAI ( Agent ):
                         del self.safe[k]
                     if k in self.visited:
                         del self.visited[k]
+                    if k in self.pits:
+                        del self.pits[k]
+                    if k in self.wumpus:
+                        del self.wumpus[k]
                 return self.get_next_move()
             elif self.orientation == "up":
                 self.ylim = self.current[1]
@@ -100,14 +117,43 @@ class MyAI ( Agent ):
                         del self.safe[k]
                     if k in self.visited:
                         del self.visited[k]
+                    if k in self.pits:
+                        del self.pits[k]
+                    if k in self.wumpus:
+                        del self.wumpus[k]
                 return self.get_next_move()
 
         if stench and breeze:
             # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
+            not_possible = []
+            if len(self.wumpus) >= 1:
+                for w in self.wumpus:
+                    if w not in danger_coord:
+                        not_possible.append(w)
+                for n in not_possible:
+                    del self.wumpus[n]
+
+            if self.wumpus_killed:
+                for c in danger_coord:
+                    if self.is_valid(c) and c not in self.visited:
+                        if c in self.wumpus and c not in self.pits:
+                            del self.wumpus[c]
+                            self.safe[c] = True
+                        else:
+                            self.pits[c] = True
+                return self.get_next_move()
+
+            elif len(self.wumpus) == 1 and self.has_arrow and not self.wumpus_killed:
+                if self.check_orientation(list(self.wumpus.keys())[0]):
+                    return Agent.Action.SHOOT
+                else:
+                    return self.move_to(list(self.wumpus.keys())[0])
+
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
-                    self.danger[c] = (True, True)
+                    self.pits[c] = True
+                    self.wumpus[c] = True
             return self.get_next_move()
 
         if breeze:
@@ -115,23 +161,54 @@ class MyAI ( Agent ):
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             for c in danger_coord:
                 if self.is_valid(c) and c not in self.visited:
-                    if c in self.danger and self.danger[c][0] is False:
-                        del self.danger[c]
+                    if c in self.wumpus and c not in self.pits:
+                        del self.wumpus[c]
                         self.safe[c] = True
                     else:
-                        self.danger[c] = (True, False)
+                        self.pits[c] = True
             return self.get_next_move()
 
         if stench:
             # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
-            for c in danger_coord:
-                if self.is_valid(c) and c not in self.visited:
-                    if c in self.danger and self.danger[c][1] is False:
-                        del self.danger[c]
+            not_possible = []
+            if len(self.wumpus) >= 1:
+                for w in self.wumpus:
+                    if w not in danger_coord:
+                        not_possible.append(w)
+                for n in not_possible:
+                    del self.wumpus[n]
+
+            if self.wumpus_killed:
+                for c in danger_coord:
+                    if self.is_valid(c) and c not in self.visited:
                         self.safe[c] = True
-                    else:
-                        self.danger[c] = (False, True)
+                        if c in self.pits:
+                            del self.pits[c]
+                        if c in self.wumpus:
+                            del self.wumpus[c]
+                if len(self.safe) > 0:
+                    return self.get_next_move()
+                else:
+                    self.got_gold = True
+                    return self.get_next_move()
+
+            elif len(self.wumpus) == 1 and self.has_arrow and not self.wumpus_killed:
+                if self.check_orientation(list(self.wumpus.keys())[0]):
+                    self.has_arrow = False
+                    return Agent.Action.SHOOT
+                else:
+                    return self.move_to(list(self.wumpus.keys())[0])
+
+            else:
+                for c in danger_coord:
+                    if self.is_valid(c) and c not in self.visited:
+                        if c in self.pits and c not in self.wumpus:
+                            del self.pits[c]
+                            self.safe[c] = True
+                        else:
+                            self.wumpus[c] = True
+
             return self.get_next_move()
 
         else:
@@ -140,8 +217,10 @@ class MyAI ( Agent ):
             for c in safe_coord:
                 if self.is_valid(c) and c not in self.visited:
                     self.safe[c] = True
-                    if c in self.danger:
-                        del self.danger[c]
+                    if c in self.pits:
+                        del self.pits[c]
+                    if c in self.wumpus:
+                        del self.wumpus[c]
             if len(self.safe) > 0:
                 return self.get_next_move()
             else:
