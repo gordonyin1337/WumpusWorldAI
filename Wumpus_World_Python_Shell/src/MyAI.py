@@ -368,9 +368,6 @@ class MyAI ( Agent ):
         else:
             self.got_gold = True
             return self.move_to(self.return_to_start())
-
-
-
     # ======================================================================
     # YOUR CODE ENDS
     # ======================================================================
