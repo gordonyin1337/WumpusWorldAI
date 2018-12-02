@@ -33,13 +33,17 @@ class MyAI ( Agent ):
         self.has_arrow = True
         self.wumpus_killed = False
         self.orientation = "right"
+        self.found_wumpus = False
+
         self.visited = dict()
         self.safe = dict()
         self.pits = dict()
         self.wumpus = dict()
         self.moving = (False, None)
+
         self.xlim = 100000
         self.ylim = 100000
+
         self.got_gold = False
         # ======================================================================
         # YOUR CODE ENDS
@@ -73,7 +77,8 @@ class MyAI ( Agent ):
         if self.current == (1, 1) and breeze:
             return Agent.Action.CLIMB
         elif self.current == (1, 1) and stench and not self.wumpus_killed and not self.has_arrow:
-            return Agent.Action.CLIMB
+            self.wumpus[(1,2)] = True
+            self.found_wumpus = True
         elif self.current == (1, 1) and stench and not self.wumpus_killed:
             self.has_arrow = False
             return Agent.Action.SHOOT
@@ -118,9 +123,10 @@ class MyAI ( Agent ):
             # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             not_possible = []
+
             if len(self.wumpus) >= 1:
                 for w in self.wumpus:
-                    if w not in danger_coord:
+                    if w not in danger_coord or not self.is_valid(w):
                         not_possible.append(w)
                 for n in not_possible:
                     del self.wumpus[n]
@@ -163,9 +169,23 @@ class MyAI ( Agent ):
             # Index 0 of danger dictionary = pit, Index 1 is wumpus
             danger_coord = [(self.current[0]+1, self.current[1]), (self.current[0]-1, self.current[1]), (self.current[0], self.current[1]+1), (self.current[0], self.current[1]-1)]
             not_possible = []
+            if self.found_wumpus:
+                for c in danger_coord:
+                    if self.is_valid(c) and c not in self.visited and c not in self.wumpus:
+                        self.safe[c] = True
+                        if c in self.pits:
+                            del self.pits[c]
+                        if c in self.wumpus:
+                            del self.wumpus[c]
+                if len(self.safe) > 0:
+                    return self.get_next_move()
+                else:
+                    self.got_gold = True
+                    return self.get_next_move()
+
             if len(self.wumpus) >= 1:
                 for w in self.wumpus:
-                    if w not in danger_coord:
+                    if w not in danger_coord or not self.is_valid(w):
                         not_possible.append(w)
                 for n in not_possible:
                     del self.wumpus[n]
@@ -320,7 +340,14 @@ class MyAI ( Agent ):
             elif self.current[0] == coord[0] and self.current[1] - 1 == coord[1]:
                 del self.visited[self.current]
                 return coord
-        return self.last_visited
+        possible_coords = [(self.current[0] + 1, self.current[1]), (self.current[0] - 1, self.current[1]),
+                           (self.current[0], self.current[1] + 1), (self.current[0], self.current[1] - 1)]
+        random.shuffle(possible_coords)
+        for coord in possible_coords:
+            if self.is_valid(coord) and coord != self.last_visited:
+                return coord
+            else:
+                return self.last_visited
 
     def check_orientation(self, coord):
         if self.current[0] + 1 == coord[0] and self.orientation == 'right':
@@ -358,7 +385,7 @@ class MyAI ( Agent ):
                 if self.is_valid(i) and i in self.visited:
                     optimal_coord = i
             for c in shuffled_list:
-                if c in self.visited and c != self.last_visited and self.is_valid(c):
+                if c in self.visited and self.is_valid(c) and c != self.last_visited:
                     if abs(safe_coord[0] - c[0]) < abs(safe_coord[0] - optimal_coord[0]):
                         optimal_coord = c
                     elif abs(safe_coord[1] - c[1]) < abs(safe_coord[1] - optimal_coord[1]):
